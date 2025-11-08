@@ -1,0 +1,504 @@
+Chess Keyboard Edition – Project Requirements Document
+1. Overview
+
+Build a browser-based JavaScript chess game where:
+
+Human plays against the computer.
+
+Board is a 2D overhead view using standard chess piece symbols.
+
+Input is keyboard-driven:
+
+Left/Right arrows: cycle through selectable pieces or destination squares.
+
+Enter: confirm selection (first press selects a piece; second press confirms destination).
+
+Escape: cancel current move selection and reset to neutral state.
+
+Left side of the screen displays a scrolling tape of moves for both players.
+
+The engine is “casual strong”: good enough to beat most non-obsessed humans, nowhere near modern engine strength.
+
+Target environment: modern desktop browser (Chrome/Firefox/Edge) running JavaScript + HTML/CSS. No backend required.
+
+2. Goals
+
+Provide a fully legal chess implementation (including castling, en passant, promotion, check/checkmate detection).
+
+Implement a keyboard-only control scheme suitable for accessibility and “no-mouse” play.
+
+Offer an AI that:
+
+Punishes obvious blunders.
+
+Demonstrates basic tactics (captures, forks, not hanging pieces every move).
+
+Provide a clear, readable move history on the left side.
+
+3. Non-Goals
+
+No online multiplayer, matchmaking, or networking.
+
+No opening books, endgame tablebases, or advanced engine features.
+
+No sophisticated animations or 3D visuals.
+
+No time controls or clocks (unless added later as an enhancement).
+
+No engine vs engine mode.
+
+4. Game Rules & Mechanics
+4.1 Standard Chess Rules
+
+The game must implement standard FIDE chess rules:
+
+8×8 board, standard initial setup for White and Black.
+
+Turn-based play: White moves first, then alternate turns.
+
+Legal moves enforced for all piece types:
+
+Pawn (including initial double-step, diagonal capture).
+
+Knight.
+
+Bishop.
+
+Rook.
+
+Queen.
+
+King.
+
+4.2 Special Rules
+
+Castling:
+
+King and rook haven’t moved.
+
+No pieces between king and rook.
+
+King is not in check, does not pass through check, and does not land in check.
+
+En passant:
+
+Track last move to determine en passant availability.
+
+Only available immediately after an opposing pawn moves two squares.
+
+Pawn Promotion:
+
+When a pawn reaches the last rank:
+
+At minimum, auto-promote to queen.
+
+(Optional enhancement: allow user to select promotion piece via keyboard.)
+
+Check / Checkmate / Stalemate:
+
+Detect check: king is under attack.
+
+Detect checkmate: king is in check and no legal moves.
+
+Detect stalemate: king is not in check and no legal moves.
+
+Other draw rules:
+
+Insufficient material (basic detection: K vs K, K+minor vs K, etc.).
+
+Threefold repetition (optional; nice-to-have).
+
+Fifty-move rule (optional; nice-to-have).
+
+4.3 Illegal Move Handling
+
+Prevent pseudo-legal moves that:
+
+Move pieces contrary to their movement rules.
+
+Move through other pieces (where not allowed).
+
+Leave own king in check.
+
+If the player attempts an illegal move (e.g., presses Enter on an invalid destination):
+
+Play an error sound or show a subtle message.
+
+Remain in “select destination” state so they can choose another square or press Escape to cancel.
+
+5. User Interface
+5.1 Layout
+
+Screen layout (desktop, landscape):
+
+Left Panel (Move Tape):
+
+Fixed width column (e.g., ~25–30% of viewport width).
+
+Displays move history for both sides.
+
+Right Panel (Game Area):
+
+Chessboard centered.
+
+Optional status area above or below board:
+
+Current player to move.
+
+Game status (e.g., “Check”, “Checkmate – White wins”, “Stalemate”).
+
+5.2 Board Rendering
+
+8×8 grid:
+
+Alternating light/dark squares.
+
+Simple, high-contrast theme.
+
+Pieces:
+
+2D standard piece icons (SVG, PNG, or Unicode piece characters).
+
+Highlights:
+
+Current selection cursor (square-by-square focus).
+
+Selected piece (after first Enter press) clearly highlighted.
+
+Optionally highlight legal destination squares for currently selected piece.
+
+5.3 Move Tape (Left Side)
+
+Vertical scrolling list displaying move history:
+
+Simple algebraic notation (e.g., 1. e4 e5 2. Nf3 Nc6 ...), or a more explicit form if desired.
+
+Requirements:
+
+Show move number and both White/Black moves.
+
+Auto-scroll so the latest move is visible.
+
+Highlight the most recent move.
+
+Advanced navigation (going back in time / move replay) is out-of-scope for v1, but the data model should not make it impossible later.
+
+6. Input & Controls
+
+The entire UX is driven primarily by the keyboard.
+
+6.1 Selection Model
+
+The board squares are internally represented as an ordered list (e.g., 0–63, A1 to H8 in reading order), and the control logic uses an index into that list.
+
+States
+
+Neutral State:
+
+No piece selected.
+
+A single square is focused (cursor position) and visibly highlighted.
+
+Piece Selected State:
+
+A specific piece belonging to the human player is selected.
+
+The destination cursor cycles through legal destination squares for that piece.
+
+Navigation Rules
+
+Left Arrow:
+
+Neutral state: Move focus one square backward in the 0–63 index (wrapping at edges).
+
+Piece selected: Cycle backward through list of legal destination squares.
+
+Right Arrow:
+
+Neutral state: Move focus one square forward in the 0–63 index (wrapping).
+
+Piece selected: Cycle forward through legal destination squares.
+
+(Up/Down arrows may be ignored or used as future enhancements for more intuitive navigation; they’re not required.)
+
+Enter Key Behavior
+
+Neutral State:
+
+If the focused square contains a piece of the current player, pressing Enter:
+
+Transitions to Piece Selected State.
+
+Stores the selected piece and its legal target squares.
+
+If focused square is empty or contains an opponent piece:
+
+Ignored or triggers a subtle “invalid selection” feedback.
+
+Piece Selected State:
+
+Enter confirms the currently focused destination square:
+
+If the square is a valid destination:
+
+Execute move.
+
+Capture piece if destination contains an opponent piece.
+
+Update board, move list, and game state.
+
+Switch turn to AI.
+
+If not a valid destination (shouldn’t normally happen if we only cycle legal moves):
+
+Play error feedback and remain in state.
+
+Escape Key Behavior
+
+At any time during a move selection:
+
+Escape cancels current move selection.
+
+Return to Neutral State.
+
+Focus may return to:
+
+The original piece’s square, or
+
+Last neutral focus position.
+
+Escape never changes the game state, only the UI’s selection state.
+
+7. Game Flow
+7.1 New Game
+
+On page load:
+
+Initialize game in standard start position.
+
+By default, human plays White (can be adjustable later).
+
+Move tape starts empty.
+
+Status shows: “New game – White to move”.
+
+(Optional future setting: choose color: Human as White or Black.)
+
+7.2 Human Turn
+
+Player uses Left/Right to choose a piece.
+
+Press Enter to select it.
+
+Use Left/Right to cycle through legal destinations for that piece.
+
+Press Enter to confirm move.
+
+Board and move tape update.
+
+Game checks for check, checkmate, or stalemate.
+
+If the move ends the game:
+
+Show final game result.
+
+AI does not move.
+
+7.3 AI Turn
+
+Once the human move is applied and game is not over:
+
+Generate list of legal moves for AI.
+
+Run chess engine to evaluate and choose move.
+
+Apply chosen move to board state.
+
+Append AI move to move tape.
+
+Update status (e.g., “Black to move”, “White is in check”).
+
+Control returns to human.
+
+8. AI / Chess Engine Requirements
+
+This is not Stockfish. It’s a simple but not idiotic engine.
+
+8.1 Engine Approach
+
+Likely approach:
+
+Minimax search with alpha-beta pruning.
+
+Fixed depth (e.g., 2–3 plies full search, possibly depth extensions for checks/captures).
+
+Must be performant enough in JavaScript in a browser for:
+
+Instant or near-instant moves on a typical desktop.
+
+If slow, the engine can:
+
+Limit depth.
+
+Use basic heuristics (e.g., prefer captures, avoid hanging pieces).
+
+8.2 Evaluation Function
+
+Material balance (piece values: pawn, knight, bishop, rook, queen, king).
+
+Simple positional heuristics (optional, but recommended):
+
+Development (pieces off starting ranks).
+
+King safety (penalize exposed king).
+
+Central control (pieces/pawns controlling central squares).
+
+At minimum, engine should:
+
+Not consistently blunder major pieces for no reason.
+
+Recognize basic tactical captures and recaptures.
+
+8.3 Difficulty
+
+Single difficulty level in v1: “Casual”.
+
+Code should be structured so future difficulties are easy:
+
+“Easy”: shallow depth + randomization.
+
+“Hard”: deeper depth.
+
+9. Data Model & Architecture
+9.1 Core Game State
+
+Represent game state in a single object, e.g.:
+
+board: 8×8 array or 64-element array of piece codes (e.g., "wP", "bK").
+
+sideToMove: "white" or "black".
+
+Castling rights (white king-side, white queen-side, black king-side, black queen-side).
+
+enPassantSquare: index or null.
+
+Half-move clock (for 50-move rule, optional).
+
+Full move number.
+
+Move history list (for supporting move tape and possible future undo).
+
+9.2 Move Generation & Validation
+
+Distinguish between:
+
+Pseudo-legal move generation (ignores self-check).
+
+Legal move filtering (removes moves that leave king in check).
+
+Functions:
+
+generateLegalMoves(state).
+
+isInCheck(state, color).
+
+applyMove(state, move) -> newState.
+
+undoMove(state, move) (optional but very helpful for engine).
+
+9.3 Rendering Layer
+
+Pure functions or simple React/Vue/Svelte/vanilla JS (implementation detail) that:
+
+Take game state and UI selection state.
+
+Render board and move tape in DOM or canvas.
+
+9.4 Input Layer
+
+Keyboard event listeners bound to:
+
+ArrowLeft, ArrowRight, Enter, Escape.
+
+Translates key presses into updates of:
+
+Selection cursor index.
+
+Current selection state (neutral vs piece-selected).
+
+Triggering move application.
+
+10. Error Handling & UX Feedback
+
+Illegal actions:
+
+Trying to select an empty square or opponent piece in neutral state:
+
+Slight shake animation or message: “No piece to move.”
+
+Trying to confirm a move when selection state is invalid:
+
+Ignore input gracefully.
+
+Game over:
+
+Once the game result is reached, further move attempts are ignored until a reset.
+
+Display clear result message and a “New Game” button (clickable or mapped to key like N as a future enhancement).
+
+11. Performance Considerations
+
+Board and UI should update instantly for human move.
+
+AI move computation should complete in a reasonable time on a typical desktop browser.
+
+Techniques:
+
+Keep game state small and immutable-friendly.
+
+Avoid unnecessary DOM re-renders.
+
+Possibly run engine in a Web Worker in later versions (out-of-scope for v1 but keep code modular to allow it).
+
+12. Testing & Validation
+
+Unit tests for:
+
+Move generation (including edge cases for castling, en passant, promotion).
+
+Check/checkmate/stalemate detection.
+
+Basic AI tests:
+
+Engine should not:
+
+Leave its own king in check.
+
+Consistently hang queens/rooks in 1 move.
+
+Manual playtesting:
+
+Full game from start to finish verifying:
+
+Move tape correctness.
+
+Keyboard control flow.
+
+ESC cancels correctly.
+
+Game end conditions.
+
+13. Assumptions & Open Design Choices
+
+These are decisions this document currently assumes (you can override them at implementation time):
+
+Human plays White by default; color selection is a later enhancement.
+
+Board is implemented via DOM + CSS (easier for highlighting and accessibility than canvas).
+
+Move notation in the tape is algebraic but simplified (no check markers, etc., in v1) to keep implementation simpler.
+
+Promotion defaults to queen (no choice UI in v1).
+
+A natural next step after this PRD would be to break this into concrete implementation tasks: data structures, move generator, engine skeleton, and then the UI and input wiring.
