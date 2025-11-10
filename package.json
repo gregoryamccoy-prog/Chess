@@ -1,0 +1,10 @@
+{
+  "name": "keyboard-chess",
+  "version": "1.0.0",
+  "description": "Keyboard-driven chess game with AI engine",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "matches": "node scripts/run-ai-matches.js"
+  },
+  "license": "MIT"
+}

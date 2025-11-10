@@ -82,22 +82,22 @@ Chess/
 ## 🧠 AI Engine Details
 
 ### Algorithm
-- **Minimax with Alpha-Beta Pruning**: Efficient search tree traversal
-- **Iterative Deepening**: Progressive depth increase within time limits
-- **Position Evaluation**: Material + positional tables + strategic factors
-- **Move Ordering**: Captures prioritized for better pruning
+- **Minimax + Alpha-Beta** with iterative deepening, quiescence search, and MVV-LVA move ordering
+- **Adaptive Time Management**: fast openings, deeper late-game searches
+- **Perspective-Based Evaluation**: consistent scoring regardless of side to move
+- **Recursion Guards**: deadline-propagated timeouts keep UI responsive
 
 ### Difficulty Characteristics
-- **Search Depth**: 5 plies (configurable)
-- **Thinking Time**: 2-3 seconds per move
-- **Playing Strength**: Intermediate level (~1200-1400 ELO estimated)
-- **Style Variation**: Randomized evaluation for varied games
+- **Search Depth**: adaptive 3–5 plies (configurable), deeper when time allows
+- **Thinking Time**: opening ≈ 0.5 s, middlegame ≈ 2–4 s, endgame up to 30 s
+- **Strength**: strong casual play; deterministic by default (set `variationScale > 0` for variety)
+- **Modes**: human vs AI, AI vs AI, or plug into the headless simulator
 
 ### Strategic Knowledge
-- King safety evaluation
-- Pawn structure analysis
-- Piece activity and mobility
-- Opening variety through controlled randomness
+- King safety shifts from pawn shields to centralized endgame kings
+- Pawn-structure heuristics (doubled, isolated, passed pawns)
+- Mobility, rook open-file bonuses, knight/bishop outpost scoring
+- Full rule awareness (checkmate, stalemate, repetition, 50-move rule)
 
 ## 🔧 Development Status
 

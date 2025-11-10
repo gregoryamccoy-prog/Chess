@@ -2,6 +2,7 @@
 // Handles pseudo-legal move generation for all chess piece types
 
 const MoveGeneration = {
+    logCheckEvents: false,
     // Direction vectors for piece movement
     directions: {
         // Orthogonal (rook-like)
@@ -613,7 +614,7 @@ const MoveGeneration = {
         
         const inCheck = this.isSquareAttacked(kingSquare, GameState.getOppositeColor(color));
         
-        if (inCheck) {
+        if (inCheck && this.logCheckEvents) {
             console.log(`${color} king at ${GameState.indexToAlgebraic(kingSquare)} is IN CHECK`);
         }
         
